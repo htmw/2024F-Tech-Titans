@@ -1,59 +1,64 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 const subjects = [
-  { id: "1", name: "Mathematics", icon: "🧮" },
-  { id: "2", name: "Science", icon: "🔬" },
-  { id: "3", name: "Literature", icon: "📚" },
-  { id: "4", name: "History", icon: "🏛️" },
-  { id: "5", name: "Art", icon: "🎨" },
+  { id: "1", name: "Mathematics", icon: "calculator", color: "#58CC02" },
+  { id: "2", name: "Physics", icon: "planet", color: "#CE82FF" },
+  { id: "3", name: "Chemistry", icon: "flask", color: "#FF9600" },
 ];
 
 const SubjectSelector = ({ onSelectSubject }) => {
   return (
-    <View style={styles.container}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.container}
+    >
       {subjects.map((subject) => (
         <TouchableOpacity
           key={subject.id}
-          style={styles.card}
+          style={[styles.card, { backgroundColor: subject.color }]}
           onPress={() => onSelectSubject(subject.id)}
         >
-          <View style={styles.cardContent}>
-            <Text style={styles.icon}>{subject.icon}</Text>
-            <Text style={styles.name}>{subject.name}</Text>
-          </View>
+          <Ionicons name={subject.icon} size={40} color="white" />
+          <Text style={styles.name}>{subject.name}</Text>
         </TouchableOpacity>
       ))}
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    padding: 8,
+    flexGrow: 0,
+    marginBottom: 24,
   },
   card: {
-    width: "48%",
-    marginBottom: 16,
-  },
-  cardContent: {
+    width: 140,
+    height: 140,
     justifyContent: "center",
     alignItems: "center",
-    padding: 16,
-    borderRadius: 8,
-    backgroundColor: "#f0f0f0",
-  },
-  icon: {
-    fontSize: 36,
-    marginBottom: 8,
+    marginRight: 16,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   name: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "bold",
+    color: "white",
     textAlign: "center",
+    marginTop: 8,
   },
 });
 
