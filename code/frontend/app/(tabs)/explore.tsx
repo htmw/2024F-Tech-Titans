@@ -5,68 +5,113 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
+  StatusBar,
+  Platform,
+  Animated,
   TouchableOpacity,
 } from "react-native";
-import { StatusBar } from "expo-status-bar";
-import { Ionicons } from "@expo/vector-icons";
-
+import { Flame, ChevronLeft } from "lucide-react-native";
+import { SearchBar } from "../components/SearchBar";
 import SubjectSelector from "../components/SubjectSelector";
 import ArticleReader from "../components/ArticleReader";
 
 const THEME_COLOR = "#58CC02";
-const BACKGROUND_COLOR = "#F5F5F5";
-const TEXT_COLOR = "#4B4B4B";
+const BACKGROUND_COLOR = "#FFFFFF";
+const TEXT_COLOR = "#2D3436";
+const SECONDARY_COLOR = "#636E72";
 
 export default function ExplorePage() {
   const [selectedSubject, setSelectedSubject] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [totalXP, setTotalXP] = useState(0);
+  const scrollY = new Animated.Value(0);
 
-  const handleSubjectSelect = (subjectId) => {
-    setSelectedSubject(subjectId);
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [1, 0.98],
+    extrapolate: "clamp",
+  });
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
   };
 
-  const handleBackToSubjects = () => {
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
+
+  const handleBack = () => {
     setSelectedSubject(null);
-  };
-
-  const handleArticleComplete = (xp) => {
-    setTotalXP((prevXP) => prevXP + xp);
+    setSearchQuery("");
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
-      <View style={styles.header}>
-        <Text style={styles.title}>Explore</Text>
+      <StatusBar barStyle="dark-content" backgroundColor={BACKGROUND_COLOR} />
+      <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
+        <View style={styles.headerLeft}>
+          {selectedSubject && (
+            <TouchableOpacity
+              onPress={handleBack}
+              style={styles.backButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <ChevronLeft size={24} color={TEXT_COLOR} strokeWidth={2.5} />
+            </TouchableOpacity>
+          )}
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>
+              {selectedSubject ? "Subject" : "Explore"}
+            </Text>
+            <Text style={styles.subtitle}>
+              {selectedSubject ? "View all topics" : "Discover new topics"}
+            </Text>
+          </View>
+        </View>
         <View style={styles.xpContainer}>
-          <Ionicons name="flame" size={24} color={THEME_COLOR} />
+          <Flame
+            size={20}
+            color={THEME_COLOR}
+            strokeWidth={2.5}
+            style={styles.xpIcon}
+          />
           <Text style={styles.xpText}>{totalXP} XP</Text>
         </View>
-      </View>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {!selectedSubject ? (
-          <>
-            <Text style={styles.subtitle}>
-              Choose a subject to start learning!
-            </Text>
-            <SubjectSelector onSelectSubject={handleSubjectSelect} />
-          </>
-        ) : (
-          <>
-            <TouchableOpacity
-              onPress={handleBackToSubjects}
-              style={styles.backButton}
-            >
-              <Ionicons name="arrow-back" size={24} color={THEME_COLOR} />
-              <Text style={styles.backButtonText}>Back to Subjects</Text>
-            </TouchableOpacity>
-            <ArticleReader
-              subjectId={selectedSubject}
-              onArticleComplete={handleArticleComplete}
-            />
-          </>
+      </Animated.View>
+
+      <Animated.ScrollView
+        contentContainerStyle={styles.scrollContent}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
         )}
-      </ScrollView>
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.searchContainer}>
+          <SearchBar
+            value={searchQuery}
+            onChangeText={handleSearch}
+            onClear={clearSearch}
+            placeholder="Search topics..."
+          />
+        </View>
+
+        {!selectedSubject ? (
+          <View style={styles.subjectContainer}>
+            <Text style={styles.sectionTitle}>
+              What would you like to learn?
+            </Text>
+            <SubjectSelector onSelectSubject={setSelectedSubject} />
+          </View>
+        ) : (
+          <ArticleReader
+            subjectId={selectedSubject}
+            searchQuery={searchQuery}
+            onArticleComplete={(xp) => setTotalXP((prev) => prev + xp)}
+          />
+        )}
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 }
@@ -80,47 +125,89 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: BACKGROUND_COLOR,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  backButton: {
+    marginRight: 12,
+    padding: 4,
+    borderRadius: 20,
+    backgroundColor: "#F8F9FA",
+  },
+  titleContainer: {
+    flex: 1,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 28,
+    fontWeight: "700",
     color: TEXT_COLOR,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: SECONDARY_COLOR,
+    marginTop: 2,
   },
   xpContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F0F0F0",
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
+    backgroundColor: "#F0FFF4",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    marginLeft: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: THEME_COLOR,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  xpIcon: {
+    marginRight: 6,
   },
   xpText: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: TEXT_COLOR,
-    marginLeft: 6,
+    fontWeight: "600",
+    color: THEME_COLOR,
   },
   scrollContent: {
-    padding: 16,
+    paddingBottom: 24,
   },
-  subtitle: {
-    fontSize: 18,
-    marginBottom: 16,
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  subjectContainer: {
+    paddingHorizontal: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "600",
     color: TEXT_COLOR,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
     marginBottom: 16,
-  },
-  backButtonText: {
-    fontSize: 18,
-    color: THEME_COLOR,
-    fontWeight: "bold",
-    marginLeft: 8,
+    letterSpacing: -0.3,
   },
 });

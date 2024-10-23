@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// components/ArticleReader.tsx
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,12 +11,34 @@ import { Ionicons } from "@expo/vector-icons";
 import dummyArticles from "./dummyArticles";
 import ArticleContentScreen from "./ArticleContentScreen";
 
-const ArticleReader = ({ subjectId, onArticleComplete }) => {
-  const [completedArticles, setCompletedArticles] = useState([]);
+interface ArticleReaderProps {
+  subjectId: string;
+  searchQuery: string;
+  onArticleComplete: (xp: number) => void;
+}
+
+const ArticleReader: React.FC<ArticleReaderProps> = ({
+  subjectId,
+  searchQuery,
+  onArticleComplete,
+}) => {
+  const [completedArticles, setCompletedArticles] = useState<string[]>([]);
   const [selectedArticle, setSelectedArticle] = useState(null);
+  const [filteredArticles, setFilteredArticles] = useState([]);
   const articles = dummyArticles[subjectId] || [];
 
-  const handleCompleteArticle = (articleId, xp) => {
+  // Update filtered articles whenever search query or subject changes
+  useEffect(() => {
+    const filtered = articles.filter((article) =>
+      searchQuery
+        ? article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          article.content.toLowerCase().includes(searchQuery.toLowerCase())
+        : true,
+    );
+    setFilteredArticles(filtered);
+  }, [searchQuery, subjectId, articles]);
+
+  const handleCompleteArticle = (articleId: string, xp: number) => {
     if (!completedArticles.includes(articleId)) {
       setCompletedArticles([...completedArticles, articleId]);
       onArticleComplete(xp);
@@ -23,38 +46,54 @@ const ArticleReader = ({ subjectId, onArticleComplete }) => {
     setSelectedArticle(null);
   };
 
-  const handleSelectArticle = (article) => {
-    setSelectedArticle(article);
-  };
-
-  if (articles.length === 0) {
-    return (
-      <Text style={styles.noArticles}>
-        No lessons available for this subject yet. Check back soon!
-      </Text>
-    );
-  }
-
   if (selectedArticle) {
     return (
       <ArticleContentScreen
         article={selectedArticle}
         onComplete={handleCompleteArticle}
         onClose={() => setSelectedArticle(null)}
+        currentIndex={articles.findIndex((a) => a.id === selectedArticle.id)}
+        totalArticles={articles.length}
+        onNext={() => {
+          const nextIndex =
+            articles.findIndex((a) => a.id === selectedArticle.id) + 1;
+          if (nextIndex < articles.length) {
+            setSelectedArticle(articles[nextIndex]);
+          }
+        }}
+        onPrevious={() => {
+          const prevIndex =
+            articles.findIndex((a) => a.id === selectedArticle.id) - 1;
+          if (prevIndex >= 0) {
+            setSelectedArticle(articles[prevIndex]);
+          }
+        }}
       />
     );
   }
 
+  if (filteredArticles.length === 0) {
+    return (
+      <View style={styles.noResults}>
+        <Text style={styles.noResultsText}>
+          {searchQuery
+            ? `No articles found matching "${searchQuery}"`
+            : "No articles available for this subject yet."}
+        </Text>
+      </View>
+    );
+  }
+
   return (
-    <ScrollView style={styles.container}>
-      {articles.map((article) => (
+    <ScrollView>
+      {filteredArticles.map((article) => (
         <TouchableOpacity
           key={article.id}
           style={[
             styles.articleCard,
             completedArticles.includes(article.id) && styles.completedArticle,
           ]}
-          onPress={() => handleSelectArticle(article)}
+          onPress={() => setSelectedArticle(article)}
         >
           <View style={styles.articleContent}>
             <Text style={styles.articleTitle}>{article.title}</Text>
@@ -77,13 +116,11 @@ const ArticleReader = ({ subjectId, onArticleComplete }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   articleCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 16,
+    marginHorizontal: 20,
     marginBottom: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -101,6 +138,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#4B4B4B",
     flex: 1,
+    marginRight: 12,
   },
   xpBadge: {
     backgroundColor: "#F0F0F0",
@@ -121,11 +159,17 @@ const styles = StyleSheet.create({
     top: 16,
     right: 16,
   },
-  noArticles: {
+  noResults: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+    marginTop: 40,
+  },
+  noResultsText: {
     fontSize: 16,
+    color: "#666",
     textAlign: "center",
-    marginTop: 20,
-    color: "#777",
   },
 });
 
