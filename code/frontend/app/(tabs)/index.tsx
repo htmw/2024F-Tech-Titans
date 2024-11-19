@@ -545,3 +545,521 @@ export default function HomeScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  // Base Container Styles
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+
+  // Header Styles
+  header: {
+    padding: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  welcome: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  xpContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF5E6",
+    padding: 8,
+    borderRadius: 16,
+    gap: 4,
+  },
+  xpText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FF9500",
+  },
+
+  // Section Styles
+  section: {
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 16,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 16,
+  },
+
+  // Level Section Styles
+  levelSection: {
+    padding: 20,
+    backgroundColor: "#F8F9FA",
+    marginHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  levelHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  levelTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  levelProgress: {
+    fontSize: 14,
+    color: "#666",
+  },
+  levelProgressBar: {
+    height: 8,
+    backgroundColor: "#E0E0E0",
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  levelProgressFill: {
+    height: "100%",
+    backgroundColor: THEME_COLOR,
+    borderRadius: 4,
+  },
+
+  // Stats Grid Styles
+  statsGrid: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    gap: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#333",
+  },
+  statLabel: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
+  },
+
+  // Quiz Card Styles
+  quizCard: {
+    width: SCREEN_WIDTH * 0.7,
+    marginRight: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  quizCardContent: {
+    gap: 12,
+  },
+  quizCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  quizCardTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: "#F0F0F0",
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: THEME_COLOR,
+  },
+  progressText: {
+    fontSize: 14,
+    color: "#666",
+  },
+
+  // Recommendation Styles
+  recommendationCard: {
+    width: SCREEN_WIDTH * 0.7,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    marginRight: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  recommendationHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  recommendationTopic: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: THEME_COLOR,
+  },
+  difficultyBadge: {
+    backgroundColor: "#F0F0F0",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  difficultyText: {
+    fontSize: 12,
+    color: "#666",
+  },
+  recommendationTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 12,
+    lineHeight: 22,
+  },
+  recommendationFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  recommendationHint: {
+    fontSize: 12,
+    color: "#666",
+  },
+
+  // Weak Areas Styles
+  weakAreaCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  weakAreaHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  weakAreaTopic: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  weakAreaScore: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FF4B4B",
+  },
+  weakAreaProgress: {
+    height: 4,
+    backgroundColor: "#F0F0F0",
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  weakAreaProgressFill: {
+    height: "100%",
+    backgroundColor: THEME_COLOR,
+    borderRadius: 2,
+  },
+
+  // Activity Card Styles
+  activityCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    backgroundColor: "#F8F9FA",
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  activityContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  activityTitle: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#333",
+  },
+  activityDate: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 2,
+  },
+  scoreContainer: {
+    backgroundColor: "#E8F4EA",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  scoreText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: THEME_COLOR,
+  },
+
+  // Quiz Screen Styles
+  quizContainer: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  quizHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  questionCounter: {
+    fontSize: 16,
+    color: "#666",
+  },
+  quizContent: {
+    flex: 1,
+    padding: 20,
+  },
+  question: {
+    fontSize: 22,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 24,
+    lineHeight: 30,
+  },
+  options: {
+    gap: 12,
+    marginBottom: 24,
+  },
+  option: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    backgroundColor: "#FFFFFF",
+  },
+  selectedOption: {
+    borderColor: THEME_COLOR,
+    backgroundColor: "#F0FFF4",
+  },
+  correctOption: {
+    borderColor: THEME_COLOR,
+    backgroundColor: "#F0FFF4",
+  },
+  incorrectOption: {
+    borderColor: "#FF4B4B",
+    backgroundColor: "#FFF0F0",
+  },
+  optionText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  selectedOptionText: {
+    color: THEME_COLOR,
+    fontWeight: "600",
+  },
+  correctOptionText: {
+    color: THEME_COLOR,
+    fontWeight: "600",
+  },
+  incorrectOptionText: {
+    color: "#FF4B4B",
+    fontWeight: "600",
+  },
+
+  // Timer Styles
+  timerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0F0F0",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
+  },
+  timerText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666",
+  },
+  timerWarningText: {
+    color: "#FF4B4B",
+  },
+  timerWarningPulse: {
+    opacity: 0.7,
+  },
+
+  // Streak Styles
+  streakContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF5E6",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginHorizontal: 20,
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  streakText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FF9500",
+  },
+
+  // Quiz Complete Styles
+  quizComplete: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  quizCompleteTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+    marginTop: 16,
+  },
+  scoreBreakdown: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+    paddingHorizontal: 20,
+    marginVertical: 24,
+  },
+  scoreItem: {
+    alignItems: "center",
+    gap: 8,
+  },
+  scoreLabel: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "500",
+  },
+  quizCompleteScore: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: THEME_COLOR,
+  },
+  quizCompleteTime: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FF9500",
+  },
+  quizCompleteStreak: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FF4B4B",
+  },
+
+  // Button Styles
+  buttonContainer: {
+    padding: 20,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#F0F0F0",
+    paddingBottom: Platform.OS === "ios" ? 0 : 20,
+  },
+  button: {
+    backgroundColor: THEME_COLOR,
+    padding: 16,
+    borderRadius: 30,
+    alignItems: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: THEME_COLOR,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+
+  // Explanation Styles
+  explanation: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "#F0FFF4",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 24,
+    gap: 12,
+  },
+  explanationText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#333",
+    lineHeight: 20,
+  },
+});
