@@ -59,6 +59,14 @@ const QuizScreen: React.FC<{
   const [score, setScore] = useState(0);
   const [completed, setCompleted] = useState(false);
 
+  const handleAnswer = (index: number) => {
+    setSelectedAnswer(index);
+    setShowExplanation(true);
+    if (index === questions[currentQuestion].correctAnswer) {
+      setScore((prev) => prev + 1);
+    }
+  };
+
   if (completed) {
     return (
       <SafeAreaView style={styles.safeArea}>
