@@ -20,6 +20,10 @@ import {
   AlertCircle,
   Clock,
   Star,
+  BarChart2,
+  Target,
+  Brain,
+  TrendingUp,
 } from "lucide-react-native";
 import { performanceStorage } from "../utils/performanceStorage";
 import { quizQuestions } from "../utils/quizData";
@@ -307,6 +311,58 @@ export default function HomeScreen() {
     }
   };
 
+  const getWeakAreas = () => {
+    const topicPerformance = new Map<
+      string,
+      { total: number; count: number }
+    >();
+
+    performances.forEach((perf) => {
+      const questions = Object.values(quizQuestions)
+        .flat()
+        .filter((q) => q.articleId === perf.articleId);
+
+      questions.forEach((q) => {
+        const curr = topicPerformance.get(q.topic) || { total: 0, count: 0 };
+        curr.total += perf.quizScore;
+        curr.count += 1;
+        topicPerformance.set(q.topic, curr);
+      });
+    });
+
+    return Array.from(topicPerformance.entries())
+      .map(([topic, stats]) => ({
+        topic,
+        average: stats.count > 0 ? stats.total / stats.count : 0,
+      }))
+      .filter((topic) => topic.average < 70)
+      .sort((a, b) => a.average - b.average)
+      .slice(0, 3);
+  };
+
+  const getRecommendedQuizzes = () => {
+    const weakAreas = getWeakAreas();
+    const weakTopics = new Set(weakAreas.map((area) => area.topic));
+
+    return Object.values(quizQuestions)
+      .flat()
+      .filter((q) => weakTopics.has(q.topic))
+      .filter((q) => !performances.some((p) => p.articleId === q.articleId))
+      .slice(0, 3);
+  };
+
+  const getPerformanceStats = () => {
+    if (performances.length === 0) return null;
+
+    const totalQuizzes = performances.length;
+    const avgScore =
+      performances.reduce((sum, p) => sum + p.quizScore, 0) / totalQuizzes;
+    const avgTime =
+      performances.reduce((sum, p) => sum + p.timeSpent, 0) / totalQuizzes;
+
+    return { totalQuizzes, avgScore, avgTime };
+  };
+
   const calculateSubjectProgress = (subjectId: string) => {
     const subjectQuizzes = quizQuestions[subjectId] || [];
     const completedQuizzes = performances.filter((p) =>
@@ -357,6 +413,92 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Performance Dashboard */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Performance Overview</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <BarChart2 size={24} color={THEME_COLOR} />
+              <Text style={styles.statValue}>
+                {getPerformanceStats()?.avgScore.toFixed(1)}%
+              </Text>
+              <Text style={styles.statLabel}>Avg Score</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Target size={24} color="#FF9500" />
+              <Text style={styles.statValue}>
+                {getPerformanceStats()?.totalQuizzes || 0}
+              </Text>
+              <Text style={styles.statLabel}>Quizzes</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Brain size={24} color="#CE82FF" />
+              <Text style={styles.statValue}>{level}</Text>
+              <Text style={styles.statLabel}>Level</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Recommended Quizzes */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recommended for You</Text>
+            <TrendingUp size={20} color={THEME_COLOR} />
+          </View>
+          <Text style={styles.sectionSubtitle}>
+            Based on your performance in weak areas
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {getRecommendedQuizzes().map((quiz) => (
+              <TouchableOpacity
+                key={quiz.id}
+                style={styles.recommendationCard}
+                onPress={() => setActiveQuiz(quiz.articleId)}
+              >
+                <View style={styles.recommendationHeader}>
+                  <Text style={styles.recommendationTopic}>{quiz.topic}</Text>
+                  <View style={styles.difficultyBadge}>
+                    <Text style={styles.difficultyText}>
+                      Level {Math.ceil(quiz.difficulty * 5)}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.recommendationTitle}>{quiz.question}</Text>
+                <View style={styles.recommendationFooter}>
+                  <Brain size={16} color="#666" />
+                  <Text style={styles.recommendationHint}>
+                    Practice to improve {quiz.topic}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Areas to Improve */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Areas to Improve</Text>
+          {getWeakAreas().map((area) => (
+            <View key={area.topic} style={styles.weakAreaCard}>
+              <View style={styles.weakAreaHeader}>
+                <Text style={styles.weakAreaTopic}>{area.topic}</Text>
+                <Text style={styles.weakAreaScore}>
+                  {area.average.toFixed(1)}%
+                </Text>
+              </View>
+              <View style={styles.weakAreaProgress}>
+                <View
+                  style={[
+                    styles.weakAreaProgressFill,
+                    { width: `${area.average}%` },
+                  ]}
+                />
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {/* Continue Learning */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Continue Learning</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -378,6 +520,7 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
+        {/* Recent Activity */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recent Activity</Text>
           {performances
@@ -402,110 +545,3 @@ export default function HomeScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  // ... (keeping all existing styles)
-
-  // New styles
-  timerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F0F0F0",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    gap: 4,
-  },
-  timerText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#666",
-  },
-  timerWarningText: {
-    color: "#FF4B4B",
-  },
-  timerWarningPulse: {
-    opacity: 0.7,
-  },
-  streakContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FFF5E6",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginBottom: 16,
-    gap: 4,
-  },
-  streakText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#FF9500",
-  },
-  scoreBreakdown: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    width: "100%",
-    paddingHorizontal: 20,
-    marginVertical: 24,
-  },
-  scoreItem: {
-    alignItems: "center",
-    gap: 8,
-  },
-  scoreLabel: {
-    fontSize: 14,
-    color: "#666",
-    fontWeight: "500",
-  },
-  levelSection: {
-    padding: 20,
-    backgroundColor: "#F8F9FA",
-    marginHorizontal: 20,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  levelHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  levelTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  levelProgress: {
-    fontSize: 14,
-    color: "#666",
-  },
-  levelProgressBar: {
-    height: 8,
-    backgroundColor: "#E0E0E0",
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  levelProgressFill: {
-    height: "100%",
-    backgroundColor: THEME_COLOR,
-    borderRadius: 4,
-  },
-  buttonContainer: {
-    padding: 20,
-    backgroundColor: "#FFFFFF",
-    borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
-    paddingBottom: Platform.OS === "ios" ? 0 : 20,
-  },
-  // Animation related styles
-  fadeIn: {
-    opacity: 1,
-    transform: [{ translateY: 0 }],
-  },
-  fadeOut: {
-    opacity: 0,
-    transform: [{ translateY: 20 }],
-  },
-});
