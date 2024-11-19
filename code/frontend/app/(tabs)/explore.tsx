@@ -17,6 +17,7 @@ import ArticleReader from "../components/ArticleReader";
 import { Article } from "../types/article";
 import { ArticleRecommendationEngine } from "../utils/recommendationEngine";
 import { performanceStorage } from "../utils/performanceStorage";
+import dummyArticles from "../components/dummyArticles";
 
 const THEME_COLOR = "#58CC02";
 const BACKGROUND_COLOR = "#FFFFFF";
@@ -42,10 +43,20 @@ export default function ExplorePage() {
   }, []);
 
   const loadUserData = async () => {
-    const userId = "user123"; // Replace with actual user ID
+    const userId = "user123";
     const performance = await performanceStorage.getUserPerformance(userId);
     const completedArticles = performance.map((p) => p.articleId);
-    const allArticles = []; // Load your articles from your data source
+
+    // Convert dummyArticles to flat array with required fields
+    const allArticles = Object.values(dummyArticles)
+      .flat()
+      .map((article) => ({
+        ...article,
+        topic: article.title.split(" ")[0], // Use first word of title as topic
+        readTime: Math.ceil(article.content.length / 1000), // Estimate reading time
+        difficulty: article.xp / 30, // Normalize difficulty based on XP
+        tags: [article.title.split(" ")[0]], // Use first word as a tag
+      }));
 
     // Filter read articles
     const userReadArticles = allArticles.filter((article) =>
@@ -60,6 +71,10 @@ export default function ExplorePage() {
         allArticles,
       );
     setRecommendedArticles(recommendations);
+
+    // Calculate total XP
+    const totalEarnedXP = performance.reduce((sum, p) => sum + p.quizScore, 0);
+    setTotalXP(totalEarnedXP);
   };
 
   const handleSearch = (text: string) => {
@@ -84,22 +99,25 @@ export default function ExplorePage() {
       <View style={styles.articleHeader}>
         <BookOpen size={20} color={THEME_COLOR} />
         <View style={styles.articleTags}>
-          {article.tags.map((tag, index) => (
-            <View key={index} style={styles.tagBadge}>
-              <Text style={styles.tagText}>{tag}</Text>
-            </View>
-          ))}
+          <View style={styles.tagBadge}>
+            <Text style={styles.tagText}>{article.topic}</Text>
+          </View>
+          <View style={styles.tagBadge}>
+            <Text style={styles.tagText}>{`${article.xp} XP`}</Text>
+          </View>
         </View>
       </View>
       <Text style={styles.articleTitle}>{article.title}</Text>
       <View style={styles.articleFooter}>
         <View style={styles.readTimeContainer}>
           <Clock size={16} color={SECONDARY_COLOR} />
-          <Text style={styles.readTime}>{article.readTime} min read</Text>
+          <Text style={styles.readTime}>
+            {Math.ceil(article.content.length / 1000)} min read
+          </Text>
         </View>
         <View style={styles.difficultyBadge}>
           <Text style={styles.difficultyText}>
-            Level {Math.ceil(article.difficulty * 5)}
+            Level {Math.ceil((article.xp / 30) * 5)}
           </Text>
         </View>
       </View>

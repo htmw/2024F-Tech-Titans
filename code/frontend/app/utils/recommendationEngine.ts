@@ -1,144 +1,76 @@
-export class RecommendationEngine {
-  static getRecommendedArticles(
-    userPerformance: UserPerformance[],
-    metadata: Map<string, ArticleMetadata>,
-    currentMasteryLevel: number,
-  ): string[] {
-    const weakAreas = this.identifyWeakAreas(userPerformance, metadata);
-    const targetDifficulty =
-      this.calculateTargetDifficulty(currentMasteryLevel);
-
-    const recommendations = Array.from(metadata.values())
-      .filter((article) => {
-        const hasWeakTopic = article.topics.some((t) => weakAreas.includes(t));
-        const appropriateDifficulty =
-          Math.abs(article.difficulty - targetDifficulty) <= 0.2;
-        const notRecentlyReviewed = !userPerformance.some(
-          (p) =>
-            p.articleId === article.id &&
-            Date.now() - p.lastReviewed.getTime() < 24 * 60 * 60 * 1000,
-        );
-
-        return hasWeakTopic && appropriateDifficulty && notRecentlyReviewed;
-      })
-      .sort(
-        (a, b) =>
-          Math.abs(a.difficulty - targetDifficulty) -
-          Math.abs(b.difficulty - targetDifficulty),
-      )
-      .map((article) => article.id);
-
-    return recommendations;
-  }
-
-  private static identifyWeakAreas(
-    performances: UserPerformance[],
-    metadata: Map<string, ArticleMetadata>,
-  ): string[] {
-    const topicPerformance = new Map<string, number[]>();
-
-    performances.forEach((perf) => {
-      const article = metadata.get(perf.articleId);
-      if (!article) return;
-
-      article.topics.forEach((topic) => {
-        const scores = topicPerformance.get(topic) || [];
-        scores.push(perf.quizScore);
-        topicPerformance.set(topic, scores);
-      });
-    });
-
-    return Array.from(topicPerformance.entries())
-      .map(([topic, scores]) => ({
-        topic,
-        avgScore: scores.reduce((a, b) => a + b, 0) / scores.length,
-      }))
-      .filter((tp) => tp.avgScore < 70)
-      .sort((a, b) => a.avgScore - b.avgScore)
-      .map((tp) => tp.topic);
-  }
-
-  private static calculateTargetDifficulty(masteryLevel: number): number {
-    return Math.min(1, masteryLevel + 0.1);
-  }
-}
+import { Article } from "../types/article";
 
 interface SimilarityScore {
   article: Article;
-  similarity: number;
+  score: number;
 }
 
 export class ArticleRecommendationEngine {
-  static calculateCosineSimilarity(
-    vector1: number[],
-    vector2: number[],
-  ): number {
-    const dotProduct = vector1.reduce(
-      (acc, val, i) => acc + val * vector2[i],
-      0,
-    );
-    const magnitude1 = Math.sqrt(
-      vector1.reduce((acc, val) => acc + val * val, 0),
-    );
-    const magnitude2 = Math.sqrt(
-      vector2.reduce((acc, val) => acc + val * val, 0),
-    );
-    return dotProduct / (magnitude1 * magnitude2);
-  }
-
-  static extractFeatureVector(article: Article): Map<string, number> {
-    const words = article.content.toLowerCase().split(/\W+/);
-    const vector = new Map<string, number>();
-
-    words.forEach((word) => {
-      if (word.length > 2) {
-        vector.set(word, (vector.get(word) || 0) + 1);
-      }
-    });
-
-    // Add topic and tags to the feature vector
-    vector.set(article.topic, (vector.get(article.topic) || 0) + 3); // Weight topics more
-    article.tags.forEach((tag) => {
-      vector.set(tag, (vector.get(tag) || 0) + 2); // Weight tags
-    });
-
-    return vector;
-  }
-
   static getArticleRecommendations(
     readArticles: Article[],
     allArticles: Article[],
     limit: number = 5,
   ): Article[] {
-    if (!readArticles.length) return allArticles.slice(0, limit);
+    // If no articles read, return first 5 articles sorted by XP (easiest first)
+    if (!readArticles.length) {
+      return allArticles.sort((a, b) => a.xp - b.xp).slice(0, limit);
+    }
 
-    // Create feature vectors for all articles
-    const articleVectors = new Map<string, Map<string, number>>();
-    allArticles.forEach((article) => {
-      articleVectors.set(article.id, this.extractFeatureVector(article));
-    });
+    // Calculate average XP of read articles to determine user level
+    const avgXP =
+      readArticles.reduce((sum, article) => sum + article.xp, 0) /
+      readArticles.length;
 
-    // Calculate user profile
-    const userProfile = new Map<string, number>();
-    readArticles.forEach((article) => {
-      const vector = articleVectors.get(article.id);
-      vector?.forEach((value, key) => {
-        userProfile.set(key, (userProfile.get(key) || 0) + value);
-      });
-    });
+    // Get articles user hasn't read yet
+    const unreadArticles = allArticles.filter(
+      (article) => !readArticles.some((read) => read.id === article.id),
+    );
 
-    // Calculate similarities
-    const similarities: SimilarityScore[] = allArticles
-      .filter((article) => !readArticles.some((read) => read.id === article.id))
-      .map((article) => {
-        const similarity = this.calculateCosineSimilarity(
-          Array.from(userProfile.values()),
-          Array.from(articleVectors.get(article.id)?.values() || []),
+    // Calculate content similarity using TF-IDF
+    const scoredArticles: SimilarityScore[] = unreadArticles.map((article) => {
+      let score = 0;
+
+      // Base score from XP similarity (closer = higher score)
+      score += 1 - Math.abs(article.xp - avgXP) / 30;
+
+      // Topic similarity bonus
+      if (readArticles.some((read) => read.topic === article.topic)) {
+        score += 0.5;
+      }
+
+      // Content similarity using word overlap
+      const articleWords = new Set(article.content.toLowerCase().split(/\W+/));
+      readArticles.forEach((readArticle) => {
+        const readWords = new Set(
+          readArticle.content.toLowerCase().split(/\W+/),
         );
-        return { article, similarity };
-      })
-      .sort((a, b) => b.similarity - a.similarity);
+        const overlap = [...articleWords].filter((word) =>
+          readWords.has(word),
+        ).length;
+        score += overlap / 1000; // Normalize content similarity score
+      });
 
-    return similarities.slice(0, limit).map((item) => item.article);
+      const difficultyScore = article.xp > avgXP ? 0.2 : 0;
+      score += difficultyScore;
+
+      return { article, score };
+    });
+
+    // Sort by score and return top N articles
+    return scoredArticles
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map((item) => item.article);
+  }
+
+  static calculateReadingLevel(articles: Article[]): number {
+    if (!articles.length) return 1;
+    const avgXP =
+      articles.reduce((sum, article) => sum + article.xp, 0) / articles.length;
+    return Math.ceil(avgXP / 10);
+  }
+
+  static getNextRecommendedLevel(currentXP: number): number {
+    return Math.min(Math.ceil(currentXP / 1000) + 1, 5);
   }
 }
