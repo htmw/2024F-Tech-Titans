@@ -59,110 +59,121 @@ const QuizScreen: React.FC<{
   const [score, setScore] = useState(0);
   const [completed, setCompleted] = useState(false);
 
-  const handleAnswer = (index: number) => {
-    setSelectedAnswer(index);
-    setShowExplanation(true);
-    if (index === questions[currentQuestion].correctAnswer) {
-      setScore(score + 1);
-    }
-  };
-
-  const handleNext = () => {
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-      setSelectedAnswer(null);
-      setShowExplanation(false);
-    } else {
-      setCompleted(true);
-      onComplete((score / questions.length) * 100);
-    }
-  };
-
   if (completed) {
     return (
-      <View style={styles.quizContainer}>
-        <View style={styles.quizComplete}>
-          <Trophy size={48} color={THEME_COLOR} />
-          <Text style={styles.quizCompleteTitle}>Quiz Complete!</Text>
-          <Text style={styles.quizCompleteScore}>
-            Score: {((score / questions.length) * 100).toFixed(0)}%
-          </Text>
-          <TouchableOpacity style={styles.button} onPress={onClose}>
-            <Text style={styles.buttonText}>Return to Home</Text>
-          </TouchableOpacity>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.quizContainer}>
+          <View style={styles.quizComplete}>
+            <Trophy size={48} color={THEME_COLOR} />
+            <Text style={styles.quizCompleteTitle}>Quiz Complete!</Text>
+            <Text style={styles.quizCompleteScore}>
+              Score: {((score / questions.length) * 100).toFixed(0)}%
+            </Text>
+            <TouchableOpacity style={styles.button} onPress={onClose}>
+              <Text style={styles.buttonText}>Return to Home</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.quizContainer}>
-      <View style={styles.quizHeader}>
-        <Text style={styles.questionCounter}>
-          Question {currentQuestion + 1} of {questions.length}
-        </Text>
-        <TouchableOpacity onPress={onClose}>
-          <Ionicons name="close" size={24} color="#666" />
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.question}>{questions[currentQuestion].question}</Text>
-
-      <View style={styles.options}>
-        {questions[currentQuestion].options.map((option, index) => (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.quizContainer}>
+        <View style={styles.quizHeader}>
+          <Text style={styles.questionCounter}>
+            Question {currentQuestion + 1} of {questions.length}
+          </Text>
           <TouchableOpacity
-            key={index}
-            style={[
-              styles.option,
-              selectedAnswer === index && styles.selectedOption,
-              showExplanation &&
-                index === questions[currentQuestion].correctAnswer &&
-                styles.correctOption,
-              showExplanation &&
-                selectedAnswer === index &&
-                selectedAnswer !== questions[currentQuestion].correctAnswer &&
-                styles.incorrectOption,
-            ]}
-            onPress={() => !showExplanation && handleAnswer(index)}
-            disabled={showExplanation}
+            onPress={onClose}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Text
-              style={[
-                styles.optionText,
-                selectedAnswer === index && styles.selectedOptionText,
-                showExplanation &&
-                  (index === questions[currentQuestion].correctAnswer
-                    ? styles.correctOptionText
-                    : selectedAnswer === index
-                      ? styles.incorrectOptionText
-                      : styles.optionText),
-              ]}
-            >
-              {option}
-            </Text>
+            <Ionicons name="close" size={24} color="#666" />
           </TouchableOpacity>
-        ))}
-      </View>
-
-      {showExplanation && (
-        <View style={styles.explanation}>
-          <AlertCircle size={20} color={THEME_COLOR} />
-          <Text style={styles.explanationText}>
-            {questions[currentQuestion].explanation}
-          </Text>
         </View>
-      )}
 
-      {showExplanation && (
-        <TouchableOpacity style={styles.button} onPress={handleNext}>
-          <Text style={styles.buttonText}>
-            {currentQuestion < questions.length - 1
-              ? "Next Question"
-              : "Complete Quiz"}
+        <ScrollView
+          style={styles.quizContent}
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.question}>
+            {questions[currentQuestion].question}
           </Text>
-        </TouchableOpacity>
-      )}
-    </View>
+
+          <View style={styles.options}>
+            {questions[currentQuestion].options.map((option, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.option,
+                  selectedAnswer === index && styles.selectedOption,
+                  showExplanation &&
+                    index === questions[currentQuestion].correctAnswer &&
+                    styles.correctOption,
+                  showExplanation &&
+                    selectedAnswer === index &&
+                    selectedAnswer !==
+                      questions[currentQuestion].correctAnswer &&
+                    styles.incorrectOption,
+                ]}
+                onPress={() => !showExplanation && handleAnswer(index)}
+                disabled={showExplanation}
+              >
+                <Text
+                  style={[
+                    styles.optionText,
+                    selectedAnswer === index && styles.selectedOptionText,
+                    showExplanation &&
+                      (index === questions[currentQuestion].correctAnswer
+                        ? styles.correctOptionText
+                        : selectedAnswer === index
+                          ? styles.incorrectOptionText
+                          : styles.optionText),
+                  ]}
+                >
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {showExplanation && (
+            <View style={styles.explanation}>
+              <AlertCircle size={20} color={THEME_COLOR} />
+              <Text style={styles.explanationText}>
+                {questions[currentQuestion].explanation}
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+
+        {showExplanation && (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => {
+                if (currentQuestion < questions.length - 1) {
+                  setCurrentQuestion(currentQuestion + 1);
+                  setSelectedAnswer(null);
+                  setShowExplanation(false);
+                } else {
+                  setCompleted(true);
+                  onComplete((score / questions.length) * 100);
+                }
+              }}
+            >
+              <Text style={styles.buttonText}>
+                {currentQuestion < questions.length - 1
+                  ? "Next Question"
+                  : "Complete Quiz"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    </SafeAreaView>
   );
 };
 
@@ -395,6 +406,10 @@ const styles = StyleSheet.create({
     color: THEME_COLOR,
   },
   // Quiz Screen Styles
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
   quizContainer: {
     flex: 1,
     backgroundColor: "#FFFFFF",
