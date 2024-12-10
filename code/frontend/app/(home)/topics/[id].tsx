@@ -7,7 +7,7 @@ import { useState } from 'react';
 const topicLessons = {
   'physics': [
     { id: 1, title: 'Introduction to Physics', duration: '15 min', isCompleted: true },
-    { id: 2, title: 'Newton\'s Laws of Motion', duration: '20 min', isCompleted: true },
+    { id: 2, title: "Newton's Laws of Motion", duration: '20 min', isCompleted: true },
     { id: 3, title: 'Energy and Work', duration: '25 min', isCompleted: false },
     { id: 4, title: 'Waves and Oscillations', duration: '18 min', isCompleted: false },
   ],
@@ -32,7 +32,7 @@ const topicLessons = {
 };
 
 // Topic titles mapping
-const topicTitles = {
+const topicTitles: Record<string, string> = {
   'physics': 'Physics',
   'programming': 'Programming',
   'mathematics': 'Mathematics',
@@ -44,45 +44,63 @@ export default function TopicDetail() {
   const { id } = useLocalSearchParams();
   const [selectedLesson, setSelectedLesson] = useState<number | null>(null);
 
+  const topicId = id as string;
   // Get lessons for the current topic
-  const lessons = topicLessons[id as keyof typeof topicLessons] || [];
-  const topicTitle = topicTitles[id as keyof typeof topicTitles] || 'Topic';
+  const lessons = topicLessons[topicId as keyof typeof topicLessons] || [];
+  const topicTitle = topicTitles[topicId] || 'Topic';
 
   const handleLessonPress = (lessonId: number) => {
     setSelectedLesson(lessonId);
-    // Navigate to lesson detail page (to be implemented)
-    router.push(`/topics/${id}/lessons/${lessonId}`);
+    router.push(`/topics/${topicId}/lessons/${lessonId}`);
   };
+
+  const completedLessons = lessons.filter(l => l.isCompleted).length;
+  const totalLessons = lessons.length;
+  const progressPercentage = (completedLessons / totalLessons) * 100;
+
+  if (!lessons.length) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <ArrowLeft size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{topicTitle}</Text>
+          <View style={{ width: 32 }} />
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.noContentText}>No lessons available for this topic.</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{topicTitle}</Text>
-        <View style={{ width: 32 }} /> {/* Spacer for alignment */}
+        <View style={{ width: 32 }} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Progress Overview */}
         <View style={styles.progressSection}>
           <Text style={styles.progressTitle}>Your Progress</Text>
           <View style={styles.progressBar}>
             <View 
               style={[
                 styles.progressFill, 
-                { width: `${(lessons.filter(l => l.isCompleted).length / lessons.length) * 100}%` }
+                { width: `${progressPercentage}%` }
               ]} 
             />
           </View>
           <Text style={styles.progressText}>
-            {lessons.filter(l => l.isCompleted).length} of {lessons.length} completed
+            {completedLessons} of {totalLessons} completed
           </Text>
         </View>
 
-        {/* Lessons List */}
         <View style={styles.lessonsList}>
           {lessons.map((lesson) => (
             <TouchableOpacity
@@ -110,7 +128,6 @@ export default function TopicDetail() {
           ))}
         </View>
 
-        {/* Bottom Padding */}
         <View style={styles.bottomPadding} />
       </ScrollView>
     </View>
@@ -144,6 +161,12 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
+  },
+  noContentText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 40,
   },
   progressSection: {
     marginBottom: 32,
