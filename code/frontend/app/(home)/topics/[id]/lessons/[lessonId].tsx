@@ -1,159 +1,119 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, CheckCircle } from 'lucide-react-native';
-import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react-native';
 
-// Sample lesson content data
-const lessonContents = {
-  'physics': {
-    1: {
+// Sample lesson data with same structure as your topic page
+const lessonData = {
+  'physics': [
+    { 
+      id: 1, 
       title: 'Introduction to Physics',
-      sections: [
-        {
-          type: 'text',
-          content: 'Physics is the natural science that studies matter, its fundamental constituents, its motion and behavior through space and time, and the related entities of energy and force.'
-        },
-        {
-          type: 'heading',
-          content: 'What is Physics?'
-        },
-        {
-          type: 'text',
-          content: 'Physics is one of the most fundamental scientific disciplines, and its main goal is to understand how the universe behaves. It studies matter, forces, energy and their interactions.'
-        },
-        {
-          type: 'heading',
-          content: 'Key Concepts'
-        },
-        {
-          type: 'list',
-          items: [
-            'Matter and Energy',
-            'Forces and Motion',
-            'Space and Time',
-            'Quantum Mechanics'
-          ]
-        },
-        {
-          type: 'text',
-          content: 'Physics plays an essential role in many related fields, including chemistry, biology, engineering, and medicine.'
-        }
-      ]
+      content: "Welcome to Physics! In this lesson, we'll explore the fundamental concepts that form the foundation of physics.",
+      duration: '15 min',
+      videoUrl: 'https://example.com/video1',
+      isCompleted: true
     },
-    // Add more lessons...
-  },
-  'programming': {
-    1: {
+    { 
+      id: 2, 
+      title: "Newton's Laws of Motion",
+      content: "In this lesson, we'll study Newton's three laws of motion and how they describe the behavior of objects.",
+      duration: '20 min',
+      videoUrl: 'https://example.com/video2',
+      isCompleted: true
+    },
+    { 
+      id: 3, 
+      title: 'Energy and Work',
+      content: "Understanding energy and work is crucial to physics. Let's explore these fundamental concepts.",
+      duration: '25 min',
+      videoUrl: 'https://example.com/video3',
+      isCompleted: false
+    },
+    { 
+      id: 4, 
+      title: 'Waves and Oscillations',
+      content: "Learn about waves, their properties, and oscillatory motion in physical systems.",
+      duration: '18 min',
+      videoUrl: 'https://example.com/video4',
+      isCompleted: false
+    },
+  ],
+  'programming': [
+    { 
+      id: 1, 
       title: 'Getting Started with Python',
-      sections: [
-        {
-          type: 'text',
-          content: 'Python is a high-level, interpreted programming language that emphasizes code readability with the use of significant indentation.'
-        },
-        {
-          type: 'heading',
-          content: 'Why Python?'
-        },
-        {
-          type: 'list',
-          items: [
-            'Easy to learn and read',
-            'Large standard library',
-            'Dynamic typing',
-            'Interpreted language'
-          ]
-        },
-        {
-          type: 'code',
-          content: 'print("Hello, World!")\n\n# This is a comment\nname = "Python"\nprint(f"Welcome to {name} programming!")'
-        }
-      ]
-    }
-  },
-  // Add more topics...
+      content: "Let's begin our Python journey! We'll set up our development environment and write our first program.",
+      duration: '20 min',
+      videoUrl: 'https://example.com/video1',
+      isCompleted: true
+    },
+    // ... other programming lessons
+  ],
+  // ... other topics
 };
 
 export default function LessonDetail() {
   const router = useRouter();
   const { id, lessonId } = useLocalSearchParams();
-  const [isCompleted, setIsCompleted] = useState(false);
-
-  // Get lesson content
-  const lesson = lessonContents[id as keyof typeof lessonContents]?.[Number(lessonId)];
-
-  const handleComplete = () => {
-    setIsCompleted(true);
-    // Here you would typically update the completion status in your backend
-    setTimeout(() => {
-      router.back();
-    }, 1000);
-  };
+  
+  // Get lessons for the topic and find the specific lesson
+  const topicLessons = lessonData[id as keyof typeof lessonData] || [];
+  const lesson = topicLessons.find(l => l.id === Number(lessonId));
 
   if (!lesson) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>Lesson not found</Text>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <ArrowLeft size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Lesson Not Found</Text>
+          <View style={{ width: 32 }} />
+        </View>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>This lesson could not be found.</Text>
+          <TouchableOpacity 
+            style={styles.returnButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.returnButtonText}>Return to Topics</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{lesson.title}</Text>
-        <TouchableOpacity 
-          style={[styles.completeButton, isCompleted && styles.completedButton]}
-          onPress={handleComplete}
-          disabled={isCompleted}
-        >
-          <CheckCircle size={20} color={isCompleted ? "#22C55E" : "#FFFFFF"} />
-        </TouchableOpacity>
+        <View style={{ width: 32 }} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {lesson.sections.map((section, index) => {
-          switch (section.type) {
-            case 'heading':
-              return (
-                <Text key={index} style={styles.sectionHeading}>
-                  {section.content}
-                </Text>
-              );
-            case 'text':
-              return (
-                <Text key={index} style={styles.paragraph}>
-                  {section.content}
-                </Text>
-              );
-            case 'list':
-              return (
-                <View key={index} style={styles.list}>
-                  {section.items.map((item, itemIndex) => (
-                    <View key={itemIndex} style={styles.listItem}>
-                      <Text style={styles.listBullet}>•</Text>
-                      <Text style={styles.listText}>{item}</Text>
-                    </View>
-                  ))}
-                </View>
-              );
-            case 'code':
-              return (
-                <View key={index} style={styles.codeBlock}>
-                  <Text style={styles.codeText}>{section.content}</Text>
-                </View>
-              );
-            default:
-              return null;
-          }
-        })}
+      <View style={styles.content}>
+        <View style={styles.infoCard}>
+          <Text style={styles.duration}>Duration: {lesson.duration}</Text>
+          <Text style={[styles.statusText, lesson.isCompleted ? styles.completed : styles.inProgress]}>
+            {lesson.isCompleted ? 'Completed' : 'In Progress'}
+          </Text>
+        </View>
+        
+        <View style={styles.lessonContent}>
+          <Text style={styles.contentText}>{lesson.content}</Text>
+        </View>
 
-        {/* Bottom Padding */}
-        <View style={styles.bottomPadding} />
-      </ScrollView>
+        <TouchableOpacity 
+          style={[styles.startButton, lesson.isCompleted && styles.completedButton]}
+          onPress={() => {/* Handle start/review lesson */}}
+        >
+          <Text style={styles.startButtonText}>
+            {lesson.isCompleted ? 'Review Lesson' : 'Start Lesson'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -182,69 +142,87 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
-  completeButton: {
-    padding: 4,
-  },
-  completedButton: {
-    opacity: 0.7,
-  },
   content: {
     flex: 1,
     padding: 20,
   },
-  errorText: {
-    color: '#FFFFFF',
+  infoCard: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  duration: {
     fontSize: 16,
-    textAlign: 'center',
+    color: '#FBBF24',
+    fontWeight: '500',
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: '500',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  completed: {
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    color: '#22C55E',
+  },
+  inProgress: {
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+    color: '#FBBF24',
+  },
+  lessonContent: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 12,
+    padding: 16,
+    flex: 1,
+  },
+  contentText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    lineHeight: 24,
+  },
+  startButton: {
+    backgroundColor: '#FBBF24',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
     marginTop: 20,
   },
-  sectionHeading: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 16,
-    marginTop: 24,
+  completedButton: {
+    backgroundColor: '#22C55E',
   },
-  paragraph: {
+  startButtonText: {
     fontSize: 16,
-    color: '#E5E5E5',
-    lineHeight: 24,
-    marginBottom: 16,
+    fontWeight: '600',
+    color: '#000000',
   },
-  list: {
-    marginBottom: 16,
-    paddingLeft: 8,
-  },
-  listItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  listBullet: {
-    color: '#FBBF24',
-    fontSize: 16,
-    marginRight: 8,
-    marginTop: 4,
-  },
-  listText: {
+  errorContainer: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  errorText: {
     fontSize: 16,
-    color: '#E5E5E5',
-    lineHeight: 24,
+    color: '#FFFFFF',
+    marginBottom: 20,
+    textAlign: 'center',
   },
-  codeBlock: {
-    backgroundColor: '#1A1A1A',
+  returnButton: {
+    backgroundColor: '#FBBF24',
+    borderRadius: 12,
     padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
+    minWidth: 200,
+    alignItems: 'center',
   },
-  codeText: {
-    fontFamily: 'monospace',
-    fontSize: 14,
-    color: '#E5E5E5',
-    lineHeight: 20,
-  },
-  bottomPadding: {
-    height: 40,
+  returnButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
   },
 });
