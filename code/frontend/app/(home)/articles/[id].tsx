@@ -3,6 +3,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Text,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
