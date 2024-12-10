@@ -37,6 +37,12 @@ export default function HomeLayout() {
         }}
       />
       <Stack.Screen 
+        name="topics/[id]/lessons"
+        options={{
+          animation: 'slide_from_right'
+        }}
+      />
+      <Stack.Screen 
         name="topics/[id]/lessons/[lessonId]"
         options={{
           animation: 'slide_from_right'
