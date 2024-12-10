@@ -1,69 +1,57 @@
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Clock } from 'lucide-react-native';
-import { useState, useEffect } from 'react';
+import { ArrowLeft, PlayCircle } from 'lucide-react-native';
+import { useState } from 'react';
 
-const sampleQuestions = [
-  {
-    id: 1,
-    question: "What is the derivative of e^x?",
-    options: ["e^x", "x·e^x", "e^(x-1)", "1/e^x"],
-    correctAnswer: 0
-  },
-  {
-    id: 2,
-    question: "What is the integral of 1/x?",
-    options: ["x", "ln|x| + C", "1/x² + C", "x·ln(x)"],
-    correctAnswer: 1
-  },
-  // Add more questions as needed
-];
+// Sample lessons data
+const topicLessons = {
+  'physics': [
+    { id: 1, title: 'Introduction to Physics', duration: '15 min', isCompleted: true },
+    { id: 2, title: 'Newton\'s Laws of Motion', duration: '20 min', isCompleted: true },
+    { id: 3, title: 'Energy and Work', duration: '25 min', isCompleted: false },
+    { id: 4, title: 'Waves and Oscillations', duration: '18 min', isCompleted: false },
+  ],
+  'programming': [
+    { id: 1, title: 'Getting Started with Python', duration: '20 min', isCompleted: true },
+    { id: 2, title: 'Variables and Data Types', duration: '25 min', isCompleted: false },
+    { id: 3, title: 'Control Flow', duration: '30 min', isCompleted: false },
+    { id: 4, title: 'Functions', duration: '22 min', isCompleted: false },
+  ],
+  'mathematics': [
+    { id: 1, title: 'Introduction to Calculus', duration: '20 min', isCompleted: true },
+    { id: 2, title: 'Derivatives', duration: '25 min', isCompleted: false },
+    { id: 3, title: 'Integration', duration: '30 min', isCompleted: false },
+    { id: 4, title: 'Applications', duration: '22 min', isCompleted: false },
+  ],
+  'data-science': [
+    { id: 1, title: 'Introduction to Data Science', duration: '15 min', isCompleted: true },
+    { id: 2, title: 'Data Analysis', duration: '25 min', isCompleted: false },
+    { id: 3, title: 'Statistical Methods', duration: '30 min', isCompleted: false },
+    { id: 4, title: 'Machine Learning Basics', duration: '28 min', isCompleted: false },
+  ],
+};
 
-export default function QuizQuestions() {
+// Topic titles mapping
+const topicTitles = {
+  'physics': 'Physics',
+  'programming': 'Programming',
+  'mathematics': 'Mathematics',
+  'data-science': 'Data Science',
+};
+
+export default function TopicDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
+  const [selectedLesson, setSelectedLesson] = useState<number | null>(null);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          // Handle quiz completion
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+  // Get lessons for the current topic
+  const lessons = topicLessons[id as keyof typeof topicLessons] || [];
+  const topicTitle = topicTitles[id as keyof typeof topicTitles] || 'Topic';
 
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  const handleAnswerSelect = (index: number) => {
-    setSelectedAnswer(index);
-    // Add slight delay before moving to next question
-    setTimeout(() => {
-      if (currentQuestion < sampleQuestions.length - 1) {
-        setCurrentQuestion(prev => prev + 1);
-        setSelectedAnswer(null);
-      } else {
-        // Handle quiz completion
-        handleQuizComplete();
-      }
-    }, 500);
-  };
-
-  const handleQuizComplete = () => {
-    // Handle quiz completion logic
-    router.back();
+  const handleLessonPress = (lessonId: number) => {
+    setSelectedLesson(lessonId);
+    // Navigate to lesson detail page (to be implemented)
+    router.push(`/topics/${id}/lessons/${lessonId}`);
   };
 
   return (
@@ -73,56 +61,58 @@ export default function QuizQuestions() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Advanced Mathematics</Text>
-        <View style={styles.timerContainer}>
-          <Clock size={16} color="#FBBF24" />
-          <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
-        </View>
+        <Text style={styles.headerTitle}>{topicTitle}</Text>
+        <View style={{ width: 32 }} /> {/* Spacer for alignment */}
       </View>
 
-      <View style={styles.content}>
-        {/* Progress Bar */}
-        <View style={styles.progressBar}>
-          <View 
-            style={[
-              styles.progressFill, 
-              { width: `${((currentQuestion + 1) / sampleQuestions.length) * 100}%` }
-            ]} 
-          />
-        </View>
-
-        {/* Question */}
-        <View style={styles.questionContainer}>
-          <Text style={styles.questionNumber}>
-            Question {currentQuestion + 1} of {sampleQuestions.length}
-          </Text>
-          <Text style={styles.questionText}>
-            {sampleQuestions[currentQuestion].question}
-          </Text>
-        </View>
-
-        {/* Options */}
-        <View style={styles.optionsContainer}>
-          {sampleQuestions[currentQuestion].options.map((option, index) => (
-            <TouchableOpacity
-              key={index}
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Progress Overview */}
+        <View style={styles.progressSection}>
+          <Text style={styles.progressTitle}>Your Progress</Text>
+          <View style={styles.progressBar}>
+            <View 
               style={[
-                styles.optionButton,
-                selectedAnswer === index && styles.optionSelected
-              ]}
-              onPress={() => handleAnswerSelect(index)}
-              disabled={selectedAnswer !== null}
+                styles.progressFill, 
+                { width: `${(lessons.filter(l => l.isCompleted).length / lessons.length) * 100}%` }
+              ]} 
+            />
+          </View>
+          <Text style={styles.progressText}>
+            {lessons.filter(l => l.isCompleted).length} of {lessons.length} completed
+          </Text>
+        </View>
+
+        {/* Lessons List */}
+        <View style={styles.lessonsList}>
+          {lessons.map((lesson) => (
+            <TouchableOpacity
+              key={lesson.id}
+              style={styles.lessonCard}
+              onPress={() => handleLessonPress(lesson.id)}
             >
-              <Text style={[
-                styles.optionText,
-                selectedAnswer === index && styles.optionTextSelected
-              ]}>
-                {option}
-              </Text>
+              <View style={styles.lessonContent}>
+                <View style={styles.lessonInfo}>
+                  <Text style={styles.lessonTitle}>{lesson.title}</Text>
+                  <Text style={styles.lessonDuration}>{lesson.duration}</Text>
+                </View>
+                <View style={[
+                  styles.lessonStatus,
+                  lesson.isCompleted && styles.lessonCompleted
+                ]}>
+                  {lesson.isCompleted ? (
+                    <Text style={styles.statusText}>Completed</Text>
+                  ) : (
+                    <PlayCircle size={20} color="#FBBF24" />
+                  )}
+                </View>
+              </View>
             </TouchableOpacity>
           ))}
         </View>
-      </View>
+
+        {/* Bottom Padding */}
+        <View style={styles.bottomPadding} />
+      </ScrollView>
     </View>
   );
 }
@@ -151,64 +141,76 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
-  timerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  timerText: {
-    color: '#FBBF24',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   content: {
     flex: 1,
     padding: 20,
+  },
+  progressSection: {
+    marginBottom: 32,
+  },
+  progressTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 12,
   },
   progressBar: {
     height: 4,
     backgroundColor: '#1A1A1A',
     borderRadius: 2,
-    marginBottom: 32,
+    marginBottom: 8,
   },
   progressFill: {
     height: '100%',
     backgroundColor: '#FBBF24',
     borderRadius: 2,
   },
-  questionContainer: {
-    marginBottom: 32,
-  },
-  questionNumber: {
+  progressText: {
     fontSize: 14,
     color: '#A3A3A3',
-    marginBottom: 8,
   },
-  questionText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    lineHeight: 32,
-  },
-  optionsContainer: {
+  lessonsList: {
     gap: 12,
   },
-  optionButton: {
+  lessonCard: {
     backgroundColor: '#1A1A1A',
-    padding: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderRadius: 16,
+    padding: 16,
   },
-  optionSelected: {
-    backgroundColor: 'rgba(251, 191, 36, 0.1)',
-    borderColor: '#FBBF24',
+  lessonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  optionText: {
+  lessonInfo: {
+    flex: 1,
+    marginRight: 16,
+  },
+  lessonTitle: {
     fontSize: 16,
+    fontWeight: '600',
     color: '#FFFFFF',
+    marginBottom: 4,
   },
-  optionTextSelected: {
-    color: '#FBBF24',
+  lessonDuration: {
+    fontSize: 14,
+    color: '#A3A3A3',
+  },
+  lessonStatus: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+  },
+  lessonCompleted: {
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+  },
+  statusText: {
+    fontSize: 14,
+    color: '#22C55E',
+    fontWeight: '500',
+  },
+  bottomPadding: {
+    height: 40,
   },
 });
