@@ -18,43 +18,157 @@ const quizData: Record<string, {
   duration: number; // in seconds
 }> = {
   'math-1': {
-    title: 'Advanced Mathematics',
-    duration: 1800, // 30 minutes
-    questions: [
-      {
-        id: 1,
-        question: "What is the derivative of e^x?",
-        options: ["e^x", "x·e^x", "e^(x-1)", "1/e^x"],
-        correctAnswer: 0,
-        explanation: "The derivative of e^x is e^x, making it one of the few functions that is its own derivative."
-      },
-      {
-        id: 2,
-        question: "What is the integral of 1/x?",
-        options: ["x", "ln|x| + C", "1/x² + C", "x·ln(x)"],
-        correctAnswer: 1,
-        explanation: "The integral of 1/x is ln|x| + C. This is one of the fundamental integration rules."
-      }
-    ]
-  },
+  title: 'Advanced Mathematics',
+  duration: 1800, // 30 minutes
+  questions: [
+    {
+      id: 1,
+      question: "What is the derivative of e^x?",
+      options: ["e^x", "x·e^x", "e^(x-1)", "1/e^x"],
+      correctAnswer: 0,
+      explanation: "The derivative of e^x is e^x, making it one of the few functions that is its own derivative."
+    },
+    {
+      id: 2,
+      question: "What is the integral of 1/x?",
+      options: ["x", "ln|x| + C", "1/x² + C", "x·ln(x)"],
+      correctAnswer: 1,
+      explanation: "The integral of 1/x is ln|x| + C. This is one of the fundamental integration rules."
+    },
+    {
+      id: 3,
+      question: "What is the limit of sin(x)/x as x approaches 0?",
+      options: ["0", "1", "∞", "undefined"],
+      correctAnswer: 1,
+      explanation: "This is a famous limit that equals 1, which can be proven using L'Hôpital's rule or geometric reasoning."
+    },
+    {
+      id: 4,
+      question: "What is the Taylor series expansion of cos(x)?",
+      options: [
+        "1 - x²/2! + x⁴/4! - ...",
+        "x + x³/3! + x⁵/5! - ...",
+        "x² + x³ + ...",
+        "1 + x² + x⁴ + ..."
+      ],
+      correctAnswer: 0,
+      explanation: "The Taylor series expansion of cos(x) is 1 - x²/2! + x⁴/4! - ..., derived from its derivatives."
+    },
+    {
+      id: 5,
+      question: "What is the derivative of sin(x)?",
+      options: ["cos(x)", "-sin(x)", "sin²(x)", "-cos(x)"],
+      correctAnswer: 0,
+      explanation: "The derivative of sin(x) is cos(x), which is a fundamental differentiation rule."
+    },
+    {
+      id: 6,
+      question: "What is the area under the curve y = x² from 0 to 3?",
+      options: ["9", "27", "18", "9"],
+      correctAnswer: 3,
+      explanation: "The area is the integral of x² from 0 to 3, calculated as (1/3)(3³) - (1/3)(0³) = 9."
+    },
+    {
+      id: 7,
+      question: "What is the solution to the equation 2x + 3 = 7?",
+      options: ["1", "2", "3", "4"],
+      correctAnswer: 1,
+      explanation: "Solving for x, 2x + 3 = 7 becomes 2x = 4, so x = 2."
+    }
+  ]
+},
+
   'physics-1': {
-    title: 'Quantum Mechanics',
-    duration: 1500,
-    questions: [
-      {
-        id: 1,
-        question: "What is the Schrödinger equation used for?",
-        options: [
-          "Describing quantum state evolution",
-          "Calculating classical momentum",
-          "Measuring temperature",
-          "Computing electrical resistance"
-        ],
-        correctAnswer: 0,
-        explanation: "The Schrödinger equation describes how the quantum state of a physical system changes over time."
-      }
-    ]
-  }
+  title: 'Quantum Mechanics',
+  duration: 1500, // 25 minutes
+  questions: [
+    {
+      id: 1,
+      question: "What is the Schrödinger equation used for?",
+      options: [
+        "Describing quantum state evolution",
+        "Calculating classical momentum",
+        "Measuring temperature",
+        "Computing electrical resistance"
+      ],
+      correctAnswer: 0,
+      explanation: "The Schrödinger equation describes how the quantum state of a physical system changes over time."
+    },
+    {
+      id: 2,
+      question: "What is the Heisenberg Uncertainty Principle?",
+      options: [
+        "Energy is always conserved",
+        "Position and momentum cannot be simultaneously known with arbitrary precision",
+        "All particles have wave-like properties",
+        "Force equals mass times acceleration"
+      ],
+      correctAnswer: 1,
+      explanation: "The Heisenberg Uncertainty Principle states that we cannot simultaneously know both the position and momentum of a particle with arbitrary precision."
+    },
+    {
+      id: 3,
+      question: "What is a photon?",
+      options: [
+        "A particle of light",
+        "A neutron",
+        "A proton",
+        "An electron"
+      ],
+      correctAnswer: 0,
+      explanation: "A photon is a quantum of light or electromagnetic radiation."
+    },
+    {
+      id: 4,
+      question: "What is Planck's constant used for?",
+      options: [
+        "Relating energy and momentum",
+        "Relating energy and frequency",
+        "Calculating gravitational force",
+        "Measuring electrical resistance"
+      ],
+      correctAnswer: 1,
+      explanation: "Planck's constant relates the energy of a photon to its frequency."
+    },
+    {
+      id: 5,
+      question: "What does E=mc² represent?",
+      options: [
+        "Energy equals mass times acceleration squared",
+        "Energy equals mass times the speed of light squared",
+        "Energy equals mass times velocity",
+        "Energy equals time times mass"
+      ],
+      correctAnswer: 1,
+      explanation: "E=mc² represents energy equals mass times the speed of light squared, a fundamental equation in Einstein's theory of relativity."
+    },
+    {
+      id: 6,
+      question: "What is the wave-particle duality?",
+      options: [
+        "The idea that waves and particles are different phenomena",
+        "The concept that particles exhibit wave-like behavior and waves exhibit particle-like behavior",
+        "The distinction between photons and electrons",
+        "The principle of energy conservation"
+      ],
+      correctAnswer: 1,
+      explanation: "Wave-particle duality is the concept that all particles exhibit both wave-like and particle-like properties."
+    },
+    {
+      id: 7,
+      question: "What is a quantum superposition?",
+      options: [
+        "A particle existing in multiple states at the same time",
+        "The principle that particles cannot overlap",
+        "The effect of gravity on quantum particles",
+        "The collapse of a wave function"
+      ],
+      correctAnswer: 0,
+      explanation: "Quantum superposition is the principle that a particle can exist in multiple states simultaneously until measured."
+    }
+  ]
+}
+
 };
 
 export default function QuizQuestions() {
