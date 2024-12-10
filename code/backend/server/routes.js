@@ -1,82 +1,95 @@
 import express from "express";
 import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
-import {
-  User,
-  ContentType,
-  Article,
-  Quiz,
-  UserProgress,
-  Streak,
-} from "./models.js";
+import { Topic, Lesson, Quiz, UserProgress } from "./models.js";
 
 const router = express.Router();
-
-// Auth middleware
 const requireAuth = ClerkExpressRequireAuth({});
 
-// User routes
-router.post("/users", requireAuth, async (req, res) => {
+// Topics routes
+router.get("/topics", requireAuth, async (req, res) => {
   try {
-    const { userId } = req.auth;
-    const userExists = await User.findOne({ clerkId: userId });
+    const topics = await Topic.find({ isActive: true }).sort("order");
+    res.json(topics);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
-    if (!userExists) {
-      const newUser = await User.create({
-        clerkId: userId,
-        email: req.body.email,
-        name: req.body.name,
-        profileImage: req.body.profileImage,
-      });
-      return res.status(201).json(newUser);
+router.get("/topics/:id", requireAuth, async (req, res) => {
+  try {
+    const topic = await Topic.findOne({ id: req.params.id });
+    if (!topic) {
+      return res.status(404).json({ error: "Topic not found" });
     }
-
-    res.status(200).json(userExists);
+    res.json(topic);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Content routes
-router.get("/content-types", requireAuth, async (req, res) => {
+// Lessons routes
+router.get("/topics/:id/lessons", requireAuth, async (req, res) => {
   try {
-    const contentTypes = await ContentType.find({ isActive: true }).sort(
-      "order",
-    );
-    res.json(contentTypes);
+    const lessons = await Lesson.find({ topicId: req.params.id }).sort("order");
+    res.json(lessons);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-router.get("/articles/:contentTypeId", requireAuth, async (req, res) => {
+router.get("/topics/:id/lessons/:lessonId", requireAuth, async (req, res) => {
   try {
-    const articles = await Article.find({
-      contentTypeId: req.params.contentTypeId,
-    }).sort("order");
-    res.json(articles);
+    const lesson = await Lesson.findOne({
+      topicId: req.params.id,
+      id: req.params.lessonId,
+    });
+    if (!lesson) {
+      return res.status(404).json({ error: "Lesson not found" });
+    }
+    res.json(lesson);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Progress routes
-router.post("/progress", requireAuth, async (req, res) => {
+// Quizzes routes
+router.get("/quizzes", requireAuth, async (req, res) => {
+  try {
+    const quizzes = await Quiz.find().sort("subject");
+    res.json(quizzes);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/quiz/:id", requireAuth, async (req, res) => {
+  try {
+    const quiz = await Quiz.findOne({ id: req.params.id });
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+    res.json(quiz);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// User Progress routes
+router.get("/user-progress", requireAuth, async (req, res) => {
   try {
     const { userId } = req.auth;
-    const progress = await UserProgress.findOneAndUpdate(
-      {
-        clerkId: userId,
-        articleId: req.body.articleId,
-      },
-      {
-        ...req.body,
-        lastReadAt: new Date(),
-      },
-      { upsert: true, new: true },
-    );
+    let progress = await UserProgress.findOne({ clerkId: userId });
 
-    // Update streak
-    await updateStreak(userId);
+    if (!progress) {
+      progress = await UserProgress.create({
+        clerkId: userId,
+        xp: 0,
+        streak: {
+          current: 0,
+          lastActivityDate: new Date(),
+        },
+      });
+    }
 
     res.json(progress);
   } catch (error) {
@@ -84,107 +97,103 @@ router.post("/progress", requireAuth, async (req, res) => {
   }
 });
 
-// Quiz routes
-router.get("/quizzes/:articleId", requireAuth, async (req, res) => {
+router.post("/complete-lesson", requireAuth, async (req, res) => {
   try {
-    const quiz = await Quiz.findOne({ articleId: req.params.articleId });
-    res.json(quiz);
+    const { userId } = req.auth;
+    const { topicId, lessonId } = req.body;
+
+    const progress = await UserProgress.findOneAndUpdate(
+      { clerkId: userId },
+      {
+        $push: {
+          completedLessons: {
+            topicId,
+            lessonId,
+            completedAt: new Date(),
+          },
+        },
+        $inc: { xp: 100 }, // Award XP for completing lesson
+        "streak.lastActivityDate": new Date(),
+      },
+      { new: true, upsert: true },
+    );
+
+    await updateStreak(userId);
+    res.json(progress);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-router.post("/quiz-attempts", requireAuth, async (req, res) => {
+router.post("/submit-quiz", requireAuth, async (req, res) => {
   try {
     const { userId } = req.auth;
-    const quiz = await Quiz.findById(req.body.quizId);
+    const { quizId, answers } = req.body;
+
+    const quiz = await Quiz.findOne({ id: quizId });
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
 
     // Calculate score
-    const score = calculateQuizScore(quiz, req.body.answers);
-
-    // Update progress if passed
-    if (score >= quiz.passingScore) {
-      await UserProgress.findOneAndUpdate(
-        { clerkId: userId, articleId: quiz.articleId },
-        { status: "completed", comprehensionScore: score },
-      );
-    }
-
-    res.json({ score });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Streak routes
-router.get("/streaks", requireAuth, async (req, res) => {
-  try {
-    const { userId } = req.auth;
-    const streak = await Streak.findOne({ clerkId: userId });
-    res.json(streak || { currentStreak: 0, longestStreak: 0 });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Helper functions
-async function updateStreak(clerkId) {
-  const streak = await Streak.findOne({ clerkId });
-  if (!streak) {
-    return await Streak.create({
-      clerkId,
-      currentStreak: 1,
-      longestStreak: 1,
-      lastActivityDate: new Date(),
-      streakHistory: [
-        {
-          date: new Date(),
-          activities: [],
-        },
-      ],
+    let correctAnswers = 0;
+    const results = quiz.questions.map((question, index) => {
+      const isCorrect = question.correctAnswer === answers[index];
+      if (isCorrect) correctAnswers++;
+      return {
+        isCorrect,
+        correctAnswer: question.options[question.correctAnswer],
+        explanation: question.explanation,
+      };
     });
+
+    const score = (correctAnswers / quiz.questions.length) * 100;
+
+    // Update user progress
+    await UserProgress.findOneAndUpdate(
+      { clerkId: userId },
+      {
+        $push: {
+          completedQuizzes: {
+            quizId,
+            score,
+            completedAt: new Date(),
+          },
+        },
+        $inc: { xp: Math.round(score) }, // Award XP based on score
+        "streak.lastActivityDate": new Date(),
+      },
+      { new: true, upsert: true },
+    );
+
+    await updateStreak(userId);
+    res.json({ score, results });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
+});
 
-  const today = new Date().toDateString();
-  const lastActivity = new Date(streak.lastActivityDate).toDateString();
+// Helper function to update streak
+async function updateStreak(clerkId) {
+  const progress = await UserProgress.findOne({ clerkId });
+  if (!progress) return;
 
-  if (today === lastActivity) {
-    return streak;
+  const lastActivity = new Date(progress.streak.lastActivityDate);
+  const today = new Date();
+  const diffDays = Math.floor((today - lastActivity) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return; // Already updated today
+
+  if (diffDays === 1) {
+    // Consecutive day
+    await UserProgress.findOneAndUpdate(
+      { clerkId },
+      { $inc: { "streak.current": 1 } },
+    );
+  } else {
+    // Streak broken
+    await UserProgress.findOneAndUpdate({ clerkId }, { "streak.current": 1 });
   }
-
-  const isConsecutiveDay =
-    new Date(lastActivity).getTime() === new Date().getTime() - 86400000;
-
-  const currentStreak = isConsecutiveDay ? streak.currentStreak + 1 : 1;
-  const longestStreak = Math.max(currentStreak, streak.longestStreak);
-
-  return await Streak.findOneAndUpdate(
-    { clerkId },
-    {
-      currentStreak,
-      longestStreak,
-      lastActivityDate: new Date(),
-    },
-    { new: true },
-  );
-}
-
-function calculateQuizScore(quiz, userAnswers) {
-  let totalPoints = 0;
-  let earnedPoints = 0;
-
-  quiz.questions.forEach((question, index) => {
-    const userAnswer = userAnswers[index];
-    totalPoints += question.points;
-    if (
-      userAnswer &&
-      question.options.find((o) => o.isCorrect && o.text === userAnswer)
-    ) {
-      earnedPoints += question.points;
-    }
-  });
-
-  return (earnedPoints / totalPoints) * 100;
 }
 
 export default router;
