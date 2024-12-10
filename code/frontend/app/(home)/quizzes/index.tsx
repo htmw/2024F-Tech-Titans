@@ -1,239 +1,234 @@
-import { useUser, useAuth } from '@clerk/clerk-expo'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
-import { useRouter } from 'expo-router'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useRouter } from 'expo-router';
 import { 
-  UserCircle, 
-  Book, 
-  Trophy, 
-  Flame,
+  ArrowLeft,
   GraduationCap,
-  ArrowRight,
-  Lightbulb,
   Atom,
   Code,
   Binary,
   Database
-} from 'lucide-react-native'
+} from 'lucide-react-native';
 
-// Types for our data
 type Quiz = {
-  id: string
-  title: string
-  questions: number
-  duration: string
-  subject: string
-  icon: JSX.Element
-}
+  id: string;
+  title: string;
+  questions: number;
+  duration: string;
+  subject: string;
+  icon: JSX.Element;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+};
 
-type Topic = {
-  id: string
-  icon: JSX.Element
-  name: string
-  lessons: string
-}
+type TopicQuizzes = {
+  [key: string]: {
+    icon: JSX.Element;
+    title: string;
+    quizzes: Quiz[];
+  };
+};
 
-const quizzes: Quiz[] = [
-  {
-    id: 'math-1',
-    title: 'Advanced Mathematics',
-    questions: 15,
-    duration: '30 min',
-    subject: 'Mathematics',
-    icon: <GraduationCap size={20} color="#FBBF24" />
+const allQuizzes: TopicQuizzes = {
+  mathematics: {
+    icon: <Binary size={20} color="#FBBF24" />,
+    title: "Mathematics",
+    quizzes: [
+      {
+        id: 'math-1',
+        title: 'Advanced Mathematics',
+        questions: 15,
+        duration: '30 min',
+        subject: 'Mathematics',
+        icon: <GraduationCap size={20} color="#FBBF24" />,
+        difficulty: 'Advanced'
+      },
+      {
+        id: 'math-2',
+        title: 'Calculus Fundamentals',
+        questions: 12,
+        duration: '25 min',
+        subject: 'Mathematics',
+        icon: <GraduationCap size={20} color="#FBBF24" />,
+        difficulty: 'Intermediate'
+      },
+      {
+        id: 'math-3',
+        title: 'Linear Algebra Basics',
+        questions: 10,
+        duration: '20 min',
+        subject: 'Mathematics',
+        icon: <GraduationCap size={20} color="#FBBF24" />,
+        difficulty: 'Beginner'
+      }
+    ]
   },
-  {
-    id: 'physics-1',
-    title: 'Quantum Mechanics',
-    questions: 12,
-    duration: '25 min',
-    subject: 'Physics',
-    icon: <Atom size={20} color="#FBBF24" />
+  physics: {
+    icon: <Atom size={20} color="#FBBF24" />,
+    title: "Physics",
+    quizzes: [
+      {
+        id: 'physics-1',
+        title: 'Quantum Mechanics',
+        questions: 12,
+        duration: '25 min',
+        subject: 'Physics',
+        icon: <Atom size={20} color="#FBBF24" />,
+        difficulty: 'Advanced'
+      },
+      {
+        id: 'physics-2',
+        title: 'Classical Mechanics',
+        questions: 15,
+        duration: '30 min',
+        subject: 'Physics',
+        icon: <Atom size={20} color="#FBBF24" />,
+        difficulty: 'Intermediate'
+      },
+      {
+        id: 'physics-3',
+        title: 'Basic Electromagnetism',
+        questions: 10,
+        duration: '20 min',
+        subject: 'Physics',
+        icon: <Atom size={20} color="#FBBF24" />,
+        difficulty: 'Beginner'
+      }
+    ]
+  },
+  programming: {
+    icon: <Code size={20} color="#FBBF24" />,
+    title: "Programming",
+    quizzes: [
+      {
+        id: 'prog-1',
+        title: 'Python Advanced Concepts',
+        questions: 15,
+        duration: '30 min',
+        subject: 'Programming',
+        icon: <Code size={20} color="#FBBF24" />,
+        difficulty: 'Advanced'
+      },
+      {
+        id: 'prog-2',
+        title: 'JavaScript Basics',
+        questions: 12,
+        duration: '25 min',
+        subject: 'Programming',
+        icon: <Code size={20} color="#FBBF24" />,
+        difficulty: 'Beginner'
+      }
+    ]
+  },
+  'data-science': {
+    icon: <Database size={20} color="#FBBF24" />,
+    title: "Data Science",
+    quizzes: [
+      {
+        id: 'data-1',
+        title: 'Machine Learning Basics',
+        questions: 15,
+        duration: '30 min',
+        subject: 'Data Science',
+        icon: <Database size={20} color="#FBBF24" />,
+        difficulty: 'Intermediate'
+      },
+      {
+        id: 'data-2',
+        title: 'Statistical Analysis',
+        questions: 12,
+        duration: '25 min',
+        subject: 'Data Science',
+        icon: <Database size={20} color="#FBBF24" />,
+        difficulty: 'Beginner'
+      }
+    ]
   }
-]
+};
 
-const topics: Topic[] = [
-  { 
-    id: 'physics',
-    icon: <Atom size={20} color="#FBBF24" />, 
-    name: "Physics", 
-    lessons: "24 lessons" 
-  },
-  { 
-    id: 'programming',
-    icon: <Code size={20} color="#FBBF24" />, 
-    name: "Programming", 
-    lessons: "32 lessons" 
-  },
-  { 
-    id: 'mathematics',
-    icon: <Binary size={20} color="#FBBF24" />, 
-    name: "Mathematics", 
-    lessons: "28 lessons" 
-  },
-  { 
-    id: 'data-science',
-    icon: <Database size={20} color="#FBBF24" />, 
-    name: "Data Science", 
-    lessons: "20 lessons" 
-  }
-]
-
-export default function Home() {
-  const { user } = useUser()
-  const { signOut } = useAuth()
-  const router = useRouter()
-
-  const handleSignOut = async () => {
-    try {
-      await signOut()
-      router.replace('/sign-in')
-    } catch (error) {
-      console.error('Error signing out:', error)
-    }
-  }
+export default function Quizzes() {
+  const router = useRouter();
 
   const handleQuizPress = (quizId: string) => {
-    router.push(`/quiz/${quizId}/questions`)
-  }
+    router.push(`/quiz/${quizId}/questions`);
+  };
 
-  const handleTopicPress = (topicId: string) => {
-    router.push(`/topics/${topicId}`)
-  }
+  const handleBackPress = () => {
+    try {
+      router.back();
+    } catch {
+      // Fallback to home screen if back navigation fails
+      router.replace('/');
+    }
+  };
+
+  const getDifficultyColor = (difficulty: Quiz['difficulty']) => {
+    switch (difficulty) {
+      case 'Beginner':
+        return '#22C55E';
+      case 'Intermediate':
+        return '#FBBF24';
+      case 'Advanced':
+        return '#EF4444';
+      default:
+        return '#A3A3A3';
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Welcome back,</Text>
-          <Text style={styles.userName}>
-            {user?.firstName || user?.emailAddresses[0].emailAddress.split('@')[0]}
-          </Text>
-        </View>
-        <TouchableOpacity onPress={handleSignOut}>
-          <UserCircle size={32} color="#FFFFFF" />
+        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+          <ArrowLeft size={24} color="#FFFFFF" />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>All Quizzes</Text>
+        <View style={{ width: 32 }} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Streak Section */}
-        <View style={styles.streakCard}>
-          <View style={styles.streakContent}>
-            <Flame size={24} color="#FBBF24" />
-            <View style={styles.streakInfo}>
-              <Text style={styles.streakDays}>7 Days</Text>
-              <Text style={styles.streakText}>Current Streak</Text>
+        {Object.entries(allQuizzes).map(([key, topicData]) => (
+          <View key={key} style={styles.section}>
+            <View style={styles.topicHeader}>
+              <View style={styles.topicIcon}>
+                {topicData.icon}
+              </View>
+              <Text style={styles.topicTitle}>{topicData.title}</Text>
+            </View>
+
+            <View style={styles.quizList}>
+              {topicData.quizzes.map((quiz) => (
+                <TouchableOpacity 
+                  key={quiz.id} 
+                  style={styles.quizCard}
+                  onPress={() => handleQuizPress(quiz.id)}
+                >
+                  <View style={styles.quizIcon}>
+                    {quiz.icon}
+                  </View>
+                  <View style={styles.quizInfo}>
+                    <Text style={styles.quizTitle}>{quiz.title}</Text>
+                    <Text style={styles.quizSubtitle}>
+                      {quiz.questions} questions • {quiz.duration}
+                    </Text>
+                  </View>
+                  <View style={[
+                    styles.difficultyBadge,
+                    { backgroundColor: `${getDifficultyColor(quiz.difficulty)}20` }
+                  ]}>
+                    <Text style={[
+                      styles.difficultyText,
+                      { color: getDifficultyColor(quiz.difficulty) }
+                    ]}>
+                      {quiz.difficulty}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
-        </View>
-
-        {/* Stats Grid */}
-        <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Trophy size={20} color="#FBBF24" />
-            <Text style={styles.statNumber}>12</Text>
-            <Text style={styles.statLabel}>Quizzes Completed</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Book size={20} color="#FBBF24" />
-            <Text style={styles.statNumber}>8</Text>
-            <Text style={styles.statLabel}>Articles Read</Text>
-          </View>
-        </View>
-
-        {/* Recent Quizzes */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Quizzes</Text>
-            <TouchableOpacity 
-              style={styles.seeAllButton}
-              onPress={() => router.push('/quizzes')}
-            >
-              <Text style={styles.seeAllText}>See all</Text>
-              <ArrowRight size={16} color="#A3A3A3" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.quizList}>
-            {quizzes.map((quiz) => (
-              <TouchableOpacity 
-                key={quiz.id} 
-                style={styles.quizCard}
-                onPress={() => handleQuizPress(quiz.id)}
-              >
-                <View style={styles.quizIcon}>
-                  {quiz.icon}
-                </View>
-                <View style={styles.quizInfo}>
-                  <Text style={styles.quizTitle}>{quiz.title}</Text>
-                  <Text style={styles.quizSubtitle}>
-                    {quiz.questions} questions • {quiz.duration}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Featured Articles */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Featured Articles</Text>
-            <TouchableOpacity 
-              style={styles.seeAllButton}
-              onPress={() => router.push('/articles')}
-            >
-              <Text style={styles.seeAllText}>See all</Text>
-              <ArrowRight size={16} color="#A3A3A3" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.articleList}>
-            {[1, 2].map((_, index) => (
-              <TouchableOpacity 
-                key={index} 
-                style={styles.articleCard}
-                onPress={() => router.push(`/articles/${index + 1}`)}
-              >
-                <Text style={styles.articleTitle}>Understanding Quantum Physics</Text>
-                <Text style={styles.articleMeta}>10 min read</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Topics */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Topics to Explore</Text>
-            <TouchableOpacity 
-              style={styles.seeAllButton}
-              onPress={() => router.push('/topics')}
-            >
-              <Text style={styles.seeAllText}>See all</Text>
-              <ArrowRight size={16} color="#A3A3A3" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.topicsGrid}>
-            {topics.map((topic) => (
-              <TouchableOpacity 
-                key={topic.id} 
-                style={styles.topicCard}
-                onPress={() => handleTopicPress(topic.id)}
-              >
-                <View style={styles.topicIcon}>
-                  {topic.icon}
-                </View>
-                <Text style={styles.topicTitle}>{topic.name}</Text>
-                <Text style={styles.topicMeta}>{topic.lessons}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Bottom Padding */}
+        ))}
         <View style={styles.bottomPadding} />
       </ScrollView>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -243,92 +238,48 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    justifyContent: 'space-between',
     paddingTop: 60,
+    paddingHorizontal: 20,
     paddingBottom: 20,
+    backgroundColor: '#1A1A1A',
   },
-  greeting: {
-    fontSize: 16,
-    color: '#A3A3A3',
+  backButton: {
+    padding: 4,
   },
-  userName: {
-    fontSize: 20,
-    fontWeight: '700',
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
     color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
   },
   content: {
     flex: 1,
     padding: 20,
   },
-  streakCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-  },
-  streakContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  streakInfo: {
-    marginLeft: 12,
-  },
-  streakDays: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  streakText: {
-    fontSize: 14,
-    color: '#A3A3A3',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginTop: 8,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#A3A3A3',
-    marginTop: 4,
-  },
   section: {
-    marginBottom: 24,
+    marginBottom: 32,
   },
-  sectionHeader: {
+  topicHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
   },
-  sectionTitle: {
+  topicIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  topicTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#FFFFFF',
-  },
-  seeAllButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  seeAllText: {
-    fontSize: 14,
-    color: '#A3A3A3',
-    marginRight: 4,
   },
   quizList: {
     gap: 12,
@@ -362,58 +313,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#A3A3A3',
   },
-  articleList: {
-    gap: 12,
+  difficultyBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginLeft: 12,
   },
-  articleCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    padding: 20,
-  },
-  articleTitle: {
-    fontSize: 16,
+  difficultyText: {
+    fontSize: 12,
     fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 8,
-  },
-  articleMeta: {
-    fontSize: 14,
-    color: '#A3A3A3',
-  },
-  topicsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  topicCard: {
-    width: '48%',
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-  },
-  topicIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: 'rgba(251, 191, 36, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  topicTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  topicMeta: {
-    fontSize: 14,
-    color: '#A3A3A3',
-    textAlign: 'center',
   },
   bottomPadding: {
     height: 40,
-  }
-})
+  },
+});

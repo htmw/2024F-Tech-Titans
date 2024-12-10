@@ -12,7 +12,8 @@ import {
   Atom,
   Code,
   Binary,
-  Database
+  Database,
+  Zap
 } from 'lucide-react-native'
 
 // Types for our data
@@ -116,13 +117,37 @@ export default function Home() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Streak Section */}
-        <View style={styles.streakCard}>
-          <View style={styles.streakContent}>
-            <Flame size={24} color="#FBBF24" />
-            <View style={styles.streakInfo}>
-              <Text style={styles.streakDays}>7 Days</Text>
-              <Text style={styles.streakText}>Current Streak</Text>
+        {/* Progress Card */}
+        <View style={styles.progressCard}>
+          <View style={styles.progressTopRow}>
+            {/* XP Section */}
+            <View style={styles.xpContainer}>
+              <View style={styles.xpIconContainer}>
+                <Zap size={24} color="#FBBF24" />
+              </View>
+              <View>
+                <Text style={styles.xpAmount}>2,450 XP</Text>
+                <View style={styles.xpProgressContainer}>
+                  <View style={styles.xpProgressBar}>
+                    <View style={[styles.xpProgressFill, { width: '75%' }]} />
+                  </View>
+                  <Text style={styles.xpToNext}>550 XP to next level</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Divider */}
+            <View style={styles.verticalDivider} />
+
+            {/* Streak Section */}
+            <View style={styles.streakContainer}>
+              <View style={styles.streakIconContainer}>
+                <Flame size={24} color="#FBBF24" />
+              </View>
+              <View>
+                <Text style={styles.streakDays}>7 Days</Text>
+                <Text style={styles.streakText}>Current Streak</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -191,7 +216,7 @@ export default function Home() {
               <TouchableOpacity 
                 key={index} 
                 style={styles.articleCard}
-                onPress={() => router.push(`/articles/${index + 1}`)}
+                onPress={() => router.push(`/articles`)}
               >
                 <Text style={styles.articleTitle}>Understanding Quantum Physics</Text>
                 <Text style={styles.articleMeta}>10 min read</Text>
@@ -229,7 +254,6 @@ export default function Home() {
           </View>
         </View>
 
-        {/* Bottom Padding */}
         <View style={styles.bottomPadding} />
       </ScrollView>
     </View>
@@ -262,18 +286,75 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  streakCard: {
+  progressCard: {
     backgroundColor: '#1A1A1A',
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
   },
-  streakContent: {
+  progressTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  xpContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  streakInfo: {
-    marginLeft: 12,
+  xpIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  xpAmount: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  xpProgressContainer: {
+    width: '100%',
+  },
+  xpProgressBar: {
+    height: 4,
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+    borderRadius: 2,
+    marginBottom: 4,
+    width: 100,
+  },
+  xpProgressFill: {
+    height: '100%',
+    backgroundColor: '#FBBF24',
+    borderRadius: 2,
+  },
+  xpToNext: {
+    fontSize: 12,
+    color: '#A3A3A3',
+  },
+  verticalDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: '#2A2A2A',
+    marginHorizontal: 16,
+  },
+  streakContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  streakIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   streakDays: {
     fontSize: 18,

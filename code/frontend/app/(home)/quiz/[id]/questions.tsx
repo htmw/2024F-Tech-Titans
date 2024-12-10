@@ -1,13 +1,14 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Clock } from 'lucide-react-native';
-import { useState, useEffect } from 'react';
+import { ArrowLeft, Clock, CheckCircle2, XCircle } from 'lucide-react-native';
+import { useState, useEffect, useRef } from 'react';
 
 type Question = {
   id: number;
   question: string;
   options: string[];
   correctAnswer: number;
+  explanation?: string;
 };
 
 // Quiz data mapping
@@ -24,20 +25,21 @@ const quizData: Record<string, {
         id: 1,
         question: "What is the derivative of e^x?",
         options: ["e^x", "x·e^x", "e^(x-1)", "1/e^x"],
-        correctAnswer: 0
+        correctAnswer: 0,
+        explanation: "The derivative of e^x is e^x, making it one of the few functions that is its own derivative."
       },
       {
         id: 2,
         question: "What is the integral of 1/x?",
         options: ["x", "ln|x| + C", "1/x² + C", "x·ln(x)"],
-        correctAnswer: 1
-      },
-      // Add more questions as needed
+        correctAnswer: 1,
+        explanation: "The integral of 1/x is ln|x| + C. This is one of the fundamental integration rules."
+      }
     ]
   },
   'physics-1': {
     title: 'Quantum Mechanics',
-    duration: 1500, // 25 minutes
+    duration: 1500,
     questions: [
       {
         id: 1,
@@ -48,9 +50,9 @@ const quizData: Record<string, {
           "Measuring temperature",
           "Computing electrical resistance"
         ],
-        correctAnswer: 0
-      },
-      // Add more questions as needed
+        correctAnswer: 0,
+        explanation: "The Schrödinger equation describes how the quantum state of a physical system changes over time."
+      }
     ]
   }
 };
@@ -60,19 +62,20 @@ export default function QuizQuestions() {
   const { id } = useLocalSearchParams();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = useState(1800); // Default to 30 minutes
+  const [timeLeft, setTimeLeft] = useState(1800);
+  const [score, setScore] = useState(0);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const quizId = id as string;
   const quiz = quizData[quizId];
 
-  // Initialize timer with quiz duration
   useEffect(() => {
     if (quiz) {
       setTimeLeft(quiz.duration);
     }
   }, [quiz]);
 
-  // Timer effect
   useEffect(() => {
     if (!quiz) return;
 
@@ -97,24 +100,43 @@ export default function QuizQuestions() {
   };
 
   const handleAnswerSelect = (index: number) => {
+    if (selectedAnswer !== null || !quiz) return;
+    
     setSelectedAnswer(index);
-    // Add slight delay before moving to next question
+    setShowFeedback(true);
+    
+    // Update score if correct
+    if (index === quiz.questions[currentQuestion].correctAnswer) {
+      setScore(prev => prev + 1);
+    }
+
+    // Animate feedback
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      })
+    ]).start();
+
+    // Move to next question after delay
     setTimeout(() => {
-      if (currentQuestion < (quiz?.questions.length ?? 0) - 1) {
+      if (currentQuestion < quiz.questions.length - 1) {
         setCurrentQuestion(prev => prev + 1);
         setSelectedAnswer(null);
+        setShowFeedback(false);
+        fadeAnim.setValue(0);
       } else {
         handleQuizComplete();
       }
-    }, 500);
+    }, 2000);
   };
 
   const handleQuizComplete = () => {
-    // Handle quiz completion logic
+    // Here you could navigate to a results page instead of going back
     router.back();
   };
 
-  // Handle case where quiz doesn't exist
   if (!quiz) {
     return (
       <View style={styles.container}>
@@ -133,6 +155,7 @@ export default function QuizQuestions() {
   }
 
   const currentQuestionData = quiz.questions[currentQuestion];
+  const isCorrect = selectedAnswer === currentQuestionData.correctAnswer;
 
   return (
     <View style={styles.container}>
@@ -157,6 +180,10 @@ export default function QuizQuestions() {
           />
         </View>
 
+        <View style={styles.scoreContainer}>
+          <Text style={styles.scoreText}>Score: {score}/{quiz.questions.length}</Text>
+        </View>
+
         <View style={styles.questionContainer}>
           <Text style={styles.questionNumber}>
             Question {currentQuestion + 1} of {quiz.questions.length}
@@ -172,20 +199,54 @@ export default function QuizQuestions() {
               key={index}
               style={[
                 styles.optionButton,
-                selectedAnswer === index && styles.optionSelected
+                selectedAnswer === index && styles.optionSelected,
+                showFeedback && selectedAnswer === index && (isCorrect ? styles.optionCorrect : styles.optionIncorrect),
+                showFeedback && index === currentQuestionData.correctAnswer && styles.optionCorrect
               ]}
               onPress={() => handleAnswerSelect(index)}
               disabled={selectedAnswer !== null}
             >
               <Text style={[
                 styles.optionText,
-                selectedAnswer === index && styles.optionTextSelected
+                selectedAnswer === index && styles.optionTextSelected,
+                showFeedback && selectedAnswer === index && (isCorrect ? styles.optionTextCorrect : styles.optionTextIncorrect)
               ]}>
                 {option}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
+
+        {showFeedback && (
+          <Animated.View 
+            style={[
+              styles.feedbackContainer,
+              { opacity: fadeAnim }
+            ]}
+          >
+            <View style={[
+              styles.feedbackContent,
+              isCorrect ? styles.feedbackCorrect : styles.feedbackIncorrect
+            ]}>
+              {isCorrect ? (
+                <CheckCircle2 size={24} color="#22C55E" />
+              ) : (
+                <XCircle size={24} color="#EF4444" />
+              )}
+              <Text style={[
+                styles.feedbackText,
+                isCorrect ? styles.feedbackTextCorrect : styles.feedbackTextIncorrect
+              ]}>
+                {isCorrect ? 'Correct!' : 'Incorrect'}
+              </Text>
+              {currentQuestionData.explanation && (
+                <Text style={styles.explanationText}>
+                  {currentQuestionData.explanation}
+                </Text>
+              )}
+            </View>
+          </Animated.View>
+        )}
       </View>
     </View>
   );
@@ -228,6 +289,15 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
+  },
+  scoreContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  scoreText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   noContentText: {
     color: '#FFFFFF',
@@ -274,11 +344,63 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(251, 191, 36, 0.1)',
     borderColor: '#FBBF24',
   },
+  optionCorrect: {
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    borderColor: '#22C55E',
+  },
+  optionIncorrect: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderColor: '#EF4444',
+  },
   optionText: {
     fontSize: 16,
     color: '#FFFFFF',
   },
   optionTextSelected: {
     color: '#FBBF24',
+  },
+  optionTextCorrect: {
+    color: '#22C55E',
+  },
+  optionTextIncorrect: {
+    color: '#EF4444',
+  },
+  feedbackContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    alignItems: 'center',
+  },
+  feedbackContent: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    width: '100%',
+  },
+  feedbackCorrect: {
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+  },
+  feedbackIncorrect: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+  },
+  feedbackText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  feedbackTextCorrect: {
+    color: '#22C55E',
+  },
+  feedbackTextIncorrect: {
+    color: '#EF4444',
+  },
+  explanationText: {
+    fontSize: 14,
+    color: '#A3A3A3',
+    textAlign: 'center',
+    marginTop: 8,
   },
 });
