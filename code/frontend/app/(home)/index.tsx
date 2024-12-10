@@ -7,13 +7,25 @@ import {
   Trophy, 
   Flame,
   GraduationCap,
-  ArrowRight
+  ArrowRight,
+  Lightbulb,
+  Atom,
+  Code,
+  Binary,
+  Database
 } from 'lucide-react-native'
 
 export default function Home() {
   const { user } = useUser()
   const { signOut } = useAuth()
   const router = useRouter()
+
+  const topics = [
+    { icon: <Atom size={20} color="#FBBF24" />, name: "Physics", lessons: "24 lessons" },
+    { icon: <Code size={20} color="#FBBF24" />, name: "Programming", lessons: "32 lessons" },
+    { icon: <Binary size={20} color="#FBBF24" />, name: "Mathematics", lessons: "28 lessons" },
+    { icon: <Database size={20} color="#FBBF24" />, name: "Data Science", lessons: "20 lessons" },
+  ]
 
   const handleSignOut = async () => {
     try {
@@ -103,6 +115,28 @@ export default function Home() {
               <TouchableOpacity key={index} style={styles.articleCard}>
                 <Text style={styles.articleTitle}>Understanding Quantum Physics</Text>
                 <Text style={styles.articleMeta}>10 min read</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Topics */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Topics to Explore</Text>
+            <TouchableOpacity style={styles.seeAllButton}>
+              <Text style={styles.seeAllText}>See all</Text>
+              <ArrowRight size={16} color="#A3A3A3" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.topicsGrid}>
+            {topics.map((topic, index) => (
+              <TouchableOpacity key={index} style={styles.topicCard}>
+                <View style={styles.topicIcon}>
+                  {topic.icon}
+                </View>
+                <Text style={styles.topicTitle}>{topic.name}</Text>
+                <Text style={styles.topicMeta}>{topic.lessons}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -255,5 +289,38 @@ const styles = StyleSheet.create({
   articleMeta: {
     fontSize: 14,
     color: '#A3A3A3',
+  },
+  topicsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  topicCard: {
+    width: '48%',
+    backgroundColor: '#1A1A1A',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+  },
+  topicIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  topicTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  topicMeta: {
+    fontSize: 14,
+    color: '#A3A3A3',
+    textAlign: 'center',
   },
 })
